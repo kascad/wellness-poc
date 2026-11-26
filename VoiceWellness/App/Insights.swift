@@ -2,18 +2,34 @@ import SwiftUI
 
 struct SignalView: View {
     let history: [Measurement]
+    @State private var showMedsi = false
 
     var body: some View {
         let lastMeasurement = history.filter { $0.source != .telephonyDemo }.max { $0.date < $1.date }
         ScrollView {
             VStack(alignment: .leading, spacing: 20) {
-                Text("Сигнал").font(.largeTitle.bold())
+                HStack {
+                    Text("Сигнал").font(.largeTitle.bold())
+                    Spacer()
+                    Button { showMedsi = true } label: {
+                        Text("Max").font(.subheadline.weight(.bold))
+                            .foregroundStyle(.white)
+                            .padding(.horizontal, 14)
+                            .padding(.vertical, 7)
+                            .background(Color(red: 0.72, green: 0.12, blue: 0.18), in: Capsule())
+                            .frame(minWidth: 44, minHeight: 44)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel("Max, тестовый сценарий кашля")
+                }
                 FatigueReadout(history: history, date: lastMeasurement?.date)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
             .padding(24)
         }
         .background(pearl.ignoresSafeArea())
+        .fullScreenCover(isPresented: $showMedsi) { MedsiFlow() }
     }
 }
 

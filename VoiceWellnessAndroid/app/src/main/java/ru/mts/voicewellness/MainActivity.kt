@@ -456,8 +456,20 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Signal() {
-        Box(Modifier.padding(top = 13.dp)) { Title("Сигнал") }
+        var showMedsi by remember { mutableStateOf(false) }
+        Row(Modifier.fillMaxWidth().padding(top = 13.dp), verticalAlignment = Alignment.CenterVertically,
+            horizontalArrangement = Arrangement.SpaceBetween) {
+            Title("Сигнал")
+            Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
+                .semantics { contentDescription = "Max, тестовый сценарий кашля" }
+                .clickable(role = Role.Button) { showMedsi = true },
+                contentAlignment = Alignment.Center) {
+                Text("Max", Modifier.background(Color(0xFFB81F2E), Pill).padding(horizontal = 14.dp, vertical = 7.dp),
+                    color = Color.White, fontWeight = FontWeight.Bold)
+            }
+        }
         FatigueReadout(latestManualMeasurement()?.date)
+        if (showMedsi) MedsiFlow { showMedsi = false }
     }
 
     @Composable
