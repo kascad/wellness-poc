@@ -117,6 +117,7 @@ struct WellnessView: View {
                 showTelephony = false
             }
         }
+        .task { await tracking.startDemoAutomatically() }
         .onChange(of: scenePhase) { _, phase in
             if phase == .background, model.recording {
                 model.cancel()
@@ -178,8 +179,10 @@ struct WellnessView: View {
                 let day = last.flatMap { latest in
                     Fatigue.days(model.history).last { Calendar.current.isDate($0.date, inSameDayAs: latest.date) }
                 }
-                Text("Последний замер · Усталость \(day?.score ?? Fatigue.defaultScore) из 100")
-                    .font(.footnote).foregroundStyle(.secondary)
+                if let day {
+                    Text("Последний замер · Усталость \(day.score) из 100")
+                        .font(.footnote).foregroundStyle(.secondary)
+                }
                 Button {
                     model.resetResult()
                     showTelephony = true
@@ -205,12 +208,7 @@ struct WellnessView: View {
                     }
                     if let result = model.result, result.source == request.source {
                         Text("Замер сохранён").font(.largeTitle.bold())
-                        if let reading {
-                            Text("Чтение").font(.headline)
-                            MeasurementDetails(entry: reading)
-                            Text("Гласная «А»").font(.headline)
-                        }
-                        MeasurementDetails(entry: result)
+                        FatigueReadout(history: model.history, date: result.date)
                         if result.source == .microphone, result.metrics == nil {
                             Text("Для расчёта темпа и пауз в записи было мало речи. Повторите чтение, чтобы перейти к «А-а-а».")
                                 .font(.footnote).foregroundStyle(.secondary)
@@ -347,7 +345,7 @@ private struct HistoryView: View {
                 VStack(alignment: .leading, spacing: 16) {
                     Text("Усталость").font(.title2.bold())
                     if days == 1 {
-                        FatigueGauge(score: points.last?.score ?? Fatigue.defaultScore)
+                        FatigueGauge(score: points.last?.score)
                     } else if !points.isEmpty {
                         Chart {
                             ForEach(Array(zip(points, points.dropFirst())), id: \.0.date) { pair in
@@ -377,14 +375,22 @@ private struct HistoryView: View {
                         .frame(height: 210)
                         Text("Дней с оценкой: \(points.count) из \(days)").font(.footnote).foregroundStyle(.secondary)
                     }
-                    if points.isEmpty && days != 1 {
-                        Text("За этот период нет оценок").font(.headline)
+                    if points.isEmpty {
+                        Text(days == 1 ? "Сегодня нет оценки" : "За этот период нет оценок").font(.headline)
                         Text(Fatigue.empty).foregroundStyle(.secondary)
                     }
                 }
                 .frame(maxWidth: .infinity, alignment: .leading)
                 .padding(18)
                 .background(.white.opacity(0.65), in: .rect(cornerRadius: 24))
+                if let latest = points.last {
+                    Text(latest.guidance)
+                        .font(.subheadline).foregroundStyle(.secondary)
+                        .multilineTextAlignment(.center)
+                        .frame(maxWidth: .infinity)
+                        .padding(.horizontal, 16)
+                        .padding(.top, 24)
+                }
                 if MeasurementModel.demoHistory && days == 30 {
                     let episode = history.filter { ($0.cough?.episodeCount ?? 0) > 0 }.sorted { $0.date < $1.date }
                     if let first = episode.first, let last = episode.last {

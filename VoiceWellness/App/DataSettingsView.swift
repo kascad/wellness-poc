@@ -18,10 +18,14 @@ struct DataSettingsView: View {
                     Text("На паузе новые замеры и напоминания отключены. История доступна.")
                         .foregroundStyle(.secondary)
                     #if DEBUG || targetEnvironment(simulator)
-                    if !tracking.paused, tracking.active == nil {
-                        Button("Создать демо-рекомендацию") {
-                            tracking.recordRecommendation("Голос звучит иначе, чем в предыдущих замерах. Если осиплость сохраняется, обсудите её с ЛОР-врачом.", demo: true)
+                    if !tracking.paused, tracking.active?.demo != false, tracking.active?.reminderID == nil {
+                        Button("Запустить тестовые уведомления") {
+                            Task { await tracking.startDemo() }
                         }
+                        .disabled(tracking.scheduling)
+                    }
+                    if let error = tracking.reminderError {
+                        Text(error).foregroundStyle(.secondary)
                     }
                     #endif
                 }

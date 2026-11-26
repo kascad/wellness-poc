@@ -3,12 +3,20 @@ import Foundation
 struct FatigueDay: Identifiable {
     let date: Date
     let score: Int
+    let preliminary: Bool
     var id: Date { date }
+
+    var guidance: String {
+        switch score {
+        case 0...33: "Голосовая усталость низкая. Продолжайте в привычном режиме."
+        case 34...66: "Голосовая усталость умеренная. Сделайте короткую паузу в разговорах."
+        default: "Голосовая усталость высокая. По возможности сократите разговоры и дайте голосу отдохнуть."
+        }
+    }
 }
 
 enum Fatigue {
-    static let defaultScore = 66
-    static let empty = "Баллы появятся после замеров за три предыдущих дня и нового замера."
+    static let empty = "Сделайте замер голоса, чтобы получить оценку."
 
     private enum Metric: CaseIterable {
         case pace, articulation, pause, cpps, cough
@@ -18,6 +26,16 @@ enum Fatigue {
             case .pace, .cpps: 25
             case .articulation, .pause: 20
             case .cough: 10
+            }
+        }
+
+        var initialReference: Double {
+            switch self {
+            case .pace: 2.7
+            case .articulation: 3.35
+            case .pause: 0.55
+            case .cpps: 14
+            case .cough: 0
             }
         }
 
@@ -39,6 +57,7 @@ enum Fatigue {
             let today = grouped[date, default: []]
             let earlier = dates.prefix(index)
             var weighted = 0.0, total = 0.0, voiceWeight = 0.0
+            var preliminary = false
             for metric in Metric.allCases {
                 let profiles = Set(today.compactMap { profile($0, for: metric) })
                 let scores = profiles.compactMap { key -> Double? in
@@ -46,16 +65,25 @@ enum Fatigue {
                     let reference = earlier.reversed().lazy.compactMap {
                         dailyValue(grouped[$0, default: []], metric: metric, key: key)
                     }.prefix(7)
-                    guard reference.count >= 3, let baseline = median(Array(reference)) else { return nil }
-                    return min(1, max(0, metric.severity(current, baseline: baseline)))
+                    let personal = reference.count >= 3 ? median(Array(reference)) : nil
+                    if personal == nil { preliminary = true }
+                    let baseline = personal ?? metric.initialReference
+                    return min(1, max(-1, metric.severity(current, baseline: baseline)))
                 }
                 guard let score = median(scores) else { continue }
                 weighted += metric.weight * score
                 total += metric.weight
                 if metric != .cough { voiceWeight += metric.weight }
             }
-            return voiceWeight > 0 ? FatigueDay(date: date, score: Int((100 * weighted / total).rounded())) : nil
+            guard voiceWeight > 0 else { return nil }
+            return FatigueDay(date: date, score: score(for: weighted / total), preliminary: preliminary)
         }
+    }
+
+    private static func score(for deviation: Double) -> Int {
+        let baseline = 12.0
+        let span = deviation < 0 ? baseline : 100 - baseline
+        return Int((baseline + span * deviation).rounded())
     }
 
     private static func profile(_ entry: Measurement, for metric: Metric) -> String? {

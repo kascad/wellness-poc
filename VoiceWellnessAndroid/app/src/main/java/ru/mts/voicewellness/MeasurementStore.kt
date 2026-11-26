@@ -3,6 +3,8 @@ package ru.mts.voicewellness
 import android.content.Context
 import org.json.JSONArray
 import org.json.JSONObject
+import java.time.LocalDate
+import java.time.ZoneId
 import java.util.UUID
 
 internal enum class Source { READING, VOWEL, TELEPHONY_DEMO }
@@ -22,6 +24,23 @@ internal class MeasurementStore(context: Context, demo: Boolean = false) {
     var paused: Boolean
         get() = preferences.getBoolean("paused", false)
         set(value) { preferences.edit().putBoolean("paused", value).apply() }
+
+    fun seedBundledHistory(context: Context) {
+        if (preferences.contains("measurements")) return
+        val fixture = context.assets.open("fatigue-history.json").bufferedReader().use { JSONArray(it.readText()) }
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val now = System.currentTimeMillis()
+        for (index in 0 until fixture.length()) {
+            val entry = fixture.getJSONObject(index)
+            val minute = entry.getInt("minuteOfDay")
+            val date = today.minusDays(entry.getLong("daysAgo")).atTime(minute / 60, minute % 60)
+            entry.put("date", date.atZone(zone).toInstant().toEpochMilli().coerceAtMost(now))
+            entry.remove("daysAgo")
+            entry.remove("minuteOfDay")
+        }
+        preferences.edit().putString("measurements", fixture.toString()).apply()
+    }
 
     fun load(): List<Measurement> {
         val data = JSONArray(preferences.getString("measurements", "[]"))

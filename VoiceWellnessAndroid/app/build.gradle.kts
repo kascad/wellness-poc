@@ -21,12 +21,26 @@ android {
         targetSdk = 35
         versionCode = 1
         versionName = "0.1"
+        buildConfigField("boolean", "BUNDLED_TEST_HISTORY", "false")
+        manifestPlaceholders["appLabel"] = "Голос"
+    }
+    buildTypes {
+        create("demo") {
+            initWith(getByName("debug"))
+            applicationIdSuffix = ".demo"
+            versionNameSuffix = "-demo"
+            buildConfigField("boolean", "BUNDLED_TEST_HISTORY", "true")
+            manifestPlaceholders["appLabel"] = "Голос · демо"
+        }
     }
     compileOptions {
         sourceCompatibility = JavaVersion.VERSION_17
         targetCompatibility = JavaVersion.VERSION_17
     }
-    buildFeatures { compose = true }
+    buildFeatures {
+        compose = true
+        buildConfig = true
+    }
 }
 
 kotlin { jvmToolchain(17) }

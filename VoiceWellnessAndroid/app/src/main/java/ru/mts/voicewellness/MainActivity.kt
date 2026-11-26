@@ -112,9 +112,11 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        demoHistory = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
+        val requestedDemo = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
             intent.getBooleanExtra("demo_history", false)
+        demoHistory = BuildConfig.BUNDLED_TEST_HISTORY || requestedDemo
         store = MeasurementStore(this, demoHistory)
+        if (BuildConfig.BUNDLED_TEST_HISTORY) store.seedBundledHistory(this)
         recommendations = Recommendations(this)
         recommendationPreferences = getSharedPreferences("recommendation", MODE_PRIVATE)
         recommendationPreferences.registerOnSharedPreferenceChangeListener(recommendationListener)
@@ -190,7 +192,7 @@ class MainActivity : ComponentActivity() {
                 }
                 if (generation == attempt && !paused && source == selection) {
                     updateHistory(history + measurement)
-                    if (selection == Source.READING && measurement.speech != null) {
+                    if (selection == Source.READING) {
                         readingStep = measurement
                         source = Source.VOWEL
                     } else {
@@ -367,8 +369,10 @@ class MainActivity : ComponentActivity() {
             val days = remember(history, zone) { Fatigue.days(history, zone) }
             val day = latestManualMeasurement()?.let { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }
             val score = days.lastOrNull { it.date == day }?.score
-            Text("Последний замер · Усталость ${score ?: Fatigue.DEFAULT_SCORE} из 100",
-                style = MaterialTheme.typography.bodySmall, color = Muted)
+            if (score != null) {
+                Text("Последний замер · Усталость $score из 100",
+                    style = MaterialTheme.typography.bodySmall, color = Muted)
+            }
             GlassButton("Телефония · демо", Icons.Default.Phone, !paused, onClick = onTelephony)
         }
     }
@@ -390,10 +394,12 @@ class MainActivity : ComponentActivity() {
         }
         val measured = result
         if (measured != null) {
-            Title("Замер сохранён")
-            if (reading != null) CardBlock("Чтение") { Details(reading) }
-            CardBlock(if (measured.source == Source.READING) "Чтение" else "Гласная «А»") { Details(measured) }
-            Button(::close) { Text("Готово") }
+            Text("Замер сохранён", Modifier.fillMaxWidth(), style = MaterialTheme.typography.headlineLarge,
+                fontWeight = FontWeight.Bold, color = OnPearl, textAlign = TextAlign.Center)
+            FatigueReadout(measured.date)
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                Button(::close) { Text("Готово") }
+            }
             return
         }
         error?.let { message ->
@@ -404,7 +410,11 @@ class MainActivity : ComponentActivity() {
         }
         Column(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(24.dp)) {
-            if (reading != null) Text("Замер речи сохранён", color = Emerald)
+            if (reading != null) {
+                val status = if (reading.speech != null) "Замер речи сохранён"
+                else "Чтение сохранено, но речи недостаточно для расчёта темпа и пауз."
+                Text(status, color = if (reading.speech != null) Emerald else Muted, textAlign = TextAlign.Center)
+            }
             if (selection == Source.VOWEL) {
                 Text("А-а-а", style = MaterialTheme.typography.headlineLarge, fontWeight = FontWeight.Bold)
                 Text("После запуска подождите секунду в тишине. Затем потяните «А-а-а» 3–4 секунды удобным голосом и завершите запись.",
@@ -447,42 +457,55 @@ class MainActivity : ComponentActivity() {
     @Composable
     private fun Signal() {
         Box(Modifier.padding(top = 13.dp)) { Title("Сигнал") }
+        FatigueReadout(latestManualMeasurement()?.date)
+    }
+
+    @Composable
+    private fun FatigueReadout(timestamp: Long?) {
         val zone = ZoneId.systemDefault()
         val days = remember(history, zone) { Fatigue.days(history, zone) }
-        val latest = latestManualMeasurement()
-        val lastDay = latest?.let { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }
-        val measuredScore = days.lastOrNull { it.date == lastDay }?.score
-        val score = measuredScore ?: Fatigue.DEFAULT_SCORE
+        val day = timestamp?.let { Instant.ofEpochMilli(it).atZone(zone).toLocalDate() }
+        val estimate = days.lastOrNull { it.date == day }
         Column(
             Modifier.fillMaxWidth().padding(top = 26.dp),
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(12.dp),
         ) {
-            Column(
-                Modifier.fillMaxWidth().clearAndSetSemantics {
-                    contentDescription = "Усталость за день, $score из 100"
-                },
-                horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(12.dp),
-            ) {
-                Text("Усталость за день", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
-                BoxWithConstraints(Modifier.fillMaxWidth().height(184.dp), contentAlignment = Alignment.Center) {
-                    val fontScale = LocalDensity.current.fontScale
-                    val size = minOf(160f, maxWidth.value / (score.toString().length * .68f * fontScale))
-                    Text(
-                        score.toString(),
-                        Modifier.graphicsLayer { scaleX = .79f; scaleY = 1.14f },
-                        fontSize = size.sp,
-                        lineHeight = size.sp,
-                        letterSpacing = 0.sp,
-                        fontWeight = FontWeight.SemiBold,
-                        color = Emerald,
-                        maxLines = 1,
-                    )
+            if (estimate != null) {
+                val score = estimate.score
+                Column(
+                    Modifier.fillMaxWidth().clearAndSetSemantics {
+                        contentDescription = "Усталость за день, $score из 100"
+                    },
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                    verticalArrangement = Arrangement.spacedBy(12.dp),
+                ) {
+                    Text("Усталость за день", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                    BoxWithConstraints(Modifier.fillMaxWidth().height(184.dp), contentAlignment = Alignment.Center) {
+                        val fontScale = LocalDensity.current.fontScale
+                        val size = minOf(160f, maxWidth.value / (score.toString().length * .68f * fontScale))
+                        Text(
+                            score.toString(),
+                            Modifier.graphicsLayer { scaleX = .79f; scaleY = 1.14f },
+                            fontSize = size.sp,
+                            lineHeight = size.sp,
+                            letterSpacing = 0.sp,
+                            fontWeight = FontWeight.SemiBold,
+                            color = Emerald,
+                            maxLines = 1,
+                        )
+                    }
+                    Text("из 100", style = MaterialTheme.typography.bodyMedium, color = Muted)
                 }
-                Text("из 100", style = MaterialTheme.typography.bodyMedium, color = Muted)
+                if (estimate.preliminary) Footnote("Предварительная оценка")
+            } else {
+                Text("Пока нет оценки", color = Muted)
             }
-            latest?.let { Box(Modifier.padding(top = 16.dp)) { Footnote(date(it.date)) } }
+            timestamp?.let { Box(Modifier.padding(top = 16.dp)) { Footnote(date(it)) } }
+            if (estimate != null) {
+                Text(estimate.guidance, Modifier.padding(start = 16.dp, top = 36.dp, end = 16.dp),
+                    style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
+            }
         }
     }
 
@@ -497,15 +520,19 @@ class MainActivity : ComponentActivity() {
         Chips(listOf(1, 7, 30), period, { if (it == 1) "1 день" else "$it дней" }) { period = it }
         CardBlock("Усталость") {
             if (period == 1) {
-                FatigueGauge(points.lastOrNull()?.score ?: Fatigue.DEFAULT_SCORE)
+                FatigueGauge(points.lastOrNull()?.score)
             } else if (points.isNotEmpty()) {
                 FatigueChart(points, start, today)
                 Footnote("Дней с оценкой: ${points.size} из $period")
             }
-            if (points.isEmpty() && period != 1) {
-                Text("За этот период нет оценок")
+            if (points.isEmpty()) {
+                Text(if (period == 1) "Сегодня нет оценки" else "За этот период нет оценок")
                 Footnote(Fatigue.EMPTY)
             }
+        }
+        points.lastOrNull()?.let { latest ->
+            Text(latest.guidance, Modifier.fillMaxWidth().padding(start = 16.dp, top = 24.dp, end = 16.dp),
+                style = MaterialTheme.typography.bodyMedium, color = Muted, textAlign = TextAlign.Center)
         }
         if (demoHistory && period == 30) {
             val zone = ZoneId.systemDefault()

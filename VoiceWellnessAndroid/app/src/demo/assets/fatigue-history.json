@@ -1,0 +1,959 @@
+[
+  {
+    "id": "193df8e0-7942-549c-b645-53506a06685c",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.794512427920191,
+      "articulation": 4.490550526469182,
+      "pause": 0.4634642788687438
+    },
+    "daysAgo": 32,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "a3698f9d-add1-544f-993c-3aaf854a3f40",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.172545130786972,
+    "daysAgo": 32,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "150cd367-3809-5c58-98d0-964deeb80c12",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.6702163116858677,
+      "articulation": 4.605265720115856,
+      "pause": 0.5137970032762949
+    },
+    "daysAgo": 31,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "6cc29308-a6d6-5597-a7bf-6d14fddd281a",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.770050121886456,
+    "daysAgo": 31,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "ba24650a-9506-5bab-a825-576caa618ddf",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7830110898033804,
+      "articulation": 4.55054749275985,
+      "pause": 0.5021899334986792
+    },
+    "daysAgo": 30,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "27173277-2086-5839-8bb9-b4ea6baffaa7",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.426687507141857,
+    "daysAgo": 30,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "359be556-ecbf-51cb-b1b6-a9efc0763836",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.837616355378872,
+      "articulation": 4.531828133340509,
+      "pause": 0.5209729106588284
+    },
+    "daysAgo": 29,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "7bab8c0d-d692-57da-ab62-c415d9debbc1",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.306139192719751,
+    "daysAgo": 29,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "3ca58d62-e42a-5b93-b247-56c7fb918aa0",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.8349159021233623,
+      "articulation": 4.455758323768765,
+      "pause": 0.5294105069851868
+    },
+    "daysAgo": 28,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "bea90df4-0e3e-5ba9-91a9-5a5839c14b5b",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.900042820750373,
+    "daysAgo": 28,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "a1e9680a-af4f-5018-8629-1137a2796ea3",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.683294045470423,
+      "articulation": 4.5694915748881995,
+      "pause": 0.5204973117923324
+    },
+    "daysAgo": 27,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "cd3ad1f7-8ad2-57e9-9cc3-f21f63e53359",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.428805144130063,
+    "daysAgo": 27,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "2ebc2073-409c-5aad-85e4-a6781aac9eb7",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7255701737393156,
+      "articulation": 4.615537890172227,
+      "pause": 0.4477711598033787
+    },
+    "daysAgo": 26,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "4353a75b-2910-534a-8bc8-36f59a89b388",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.437324389000622,
+    "daysAgo": 26,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "759ad865-c06a-5d80-a1bb-808d963ee0cd",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.712822773695297,
+      "articulation": 4.558701666499217,
+      "pause": 0.45619029772173547
+    },
+    "daysAgo": 25,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "32d85851-fbbc-5a3c-a8d5-f655cc593048",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.77155598330467,
+    "daysAgo": 25,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "ec580d66-d9a6-5f17-9889-50746e852397",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.6613841679958967,
+      "articulation": 4.570031487431242,
+      "pause": 0.49550109288264355
+    },
+    "daysAgo": 24,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "a2d458a0-3ff7-530a-a1dc-975a703fedb2",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.32748085193197,
+    "daysAgo": 24,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "cffecf50-89ab-5a1f-9e67-bb953a33910e",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.813205166011275,
+      "articulation": 4.5346906176686455,
+      "pause": 0.5212608058927723
+    },
+    "daysAgo": 23,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "f290bab1-1efc-5774-b43b-8b0c3eb9e773",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.884526745382447,
+    "daysAgo": 23,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "854b2bc1-b553-5297-b03d-a06115ddedb0",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.818560116225307,
+      "articulation": 4.500108690853978,
+      "pause": 0.5295777003182528
+    },
+    "daysAgo": 22,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "0d60c3aa-bd5e-5063-9906-68ea272d295a",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.016701965214134,
+    "daysAgo": 22,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "81abfe91-9b0e-50b9-b8e0-6661000380b5",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7370513323641013,
+      "articulation": 4.553664013975843,
+      "pause": 0.45030251472404864
+    },
+    "daysAgo": 21,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "6e4417f3-361b-5ab1-9502-85089bdc19e3",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.793921424825461,
+    "daysAgo": 21,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "de0ed3ae-38a7-5246-95c1-8d69ee09dd98",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7580887746718363,
+      "articulation": 4.592818446128309,
+      "pause": 0.4490273891704601
+    },
+    "daysAgo": 20,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "5fe18c7a-8c7d-5203-9d7e-db96f996689b",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.032860790468687,
+    "daysAgo": 20,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "333af5b1-6c2b-5de3-8abb-dc8f2aba9bf7",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7265942523428075,
+      "articulation": 4.606230907129076,
+      "pause": 0.5341393266781039
+    },
+    "daysAgo": 19,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "bf9a263c-2e8c-5659-b578-0b1c3bb5a562",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.80522351186818,
+    "daysAgo": 19,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "446eecda-0a64-591f-8c47-c9a5d52118ab",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.757863832256364,
+      "articulation": 4.4708370378721405,
+      "pause": 0.5155366166982971
+    },
+    "daysAgo": 18,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "8d35f768-717b-5e70-bb52-3eb882bd6da7",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.418396274318859,
+    "daysAgo": 18,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "1ba27844-43d7-53fb-a643-9145b0c040d6",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.787165529596266,
+      "articulation": 4.56630830030863,
+      "pause": 0.4486471607663181
+    },
+    "daysAgo": 17,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "060eb962-a1d1-558e-a4d8-e6df840798d8",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.809309346723062,
+    "daysAgo": 17,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "491077a6-64c9-5187-aa26-2d85686778c1",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.703141542693911,
+      "articulation": 4.4663472130316055,
+      "pause": 0.4570407009205559
+    },
+    "daysAgo": 16,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "526e5bfd-a6c6-5538-ab2f-5633f12c7a00",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.430705767564898,
+    "daysAgo": 16,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "05073e6d-7b16-5548-bc70-a74d6e2c5764",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.722626160520916,
+      "articulation": 4.631371789883876,
+      "pause": 0.5134751516912386
+    },
+    "daysAgo": 15,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "173ee162-9d7a-50bd-a63c-e08a573812ed",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.29828861512699,
+    "daysAgo": 15,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "4c251c63-0481-5c41-8703-89429f79843c",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.8243146075513175,
+      "articulation": 4.589582114571711,
+      "pause": 0.4762881918021335
+    },
+    "daysAgo": 14,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "4a815b27-62c8-5327-9ff8-82ca3655840a",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.07816297020163,
+    "daysAgo": 14,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "f8bc7976-badf-5c6b-acf3-5524bb2e4135",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7302128461597857,
+      "articulation": 4.456459136257311,
+      "pause": 0.4489678991859729
+    },
+    "daysAgo": 13,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "6c56092c-e494-55b6-bc66-67baa6d8463b",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.148667427345147,
+    "daysAgo": 13,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "719c91fd-199c-553b-8a2e-b1330ad2d81e",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.754093323350526,
+      "articulation": 4.644485291780422,
+      "pause": 0.5008547664063899
+    },
+    "daysAgo": 12,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "58ee1d13-1fad-5afc-91c8-674cbfcbab9d",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.329455474729306,
+    "daysAgo": 12,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "3f7869b0-abd3-5e64-a426-be7f98409c4e",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7457712226062134,
+      "articulation": 4.5664030167207645,
+      "pause": 0.5183992462231485
+    },
+    "daysAgo": 11,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "76503f6d-3e27-513d-b972-4c04a2ce6482",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.764531154783084,
+    "daysAgo": 11,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "64c6cbb5-df5a-582d-b3c4-990123bddb39",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 2,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.0154469803083814,
+      "articulation": 3.866324331916416,
+      "pause": 0.8222981702203047
+    },
+    "daysAgo": 10,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "098d2eb7-ebf5-559a-857c-83fad958b6e7",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 10.645227600142308,
+    "daysAgo": 10,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "b93a56f6-d313-5d9b-a9ec-79cca036651b",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 3,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 2.71152208099152,
+      "articulation": 3.4917782321852675,
+      "pause": 0.9738603925407401
+    },
+    "daysAgo": 9,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "2e2673e1-1352-5c39-b373-f2a389e3c102",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 9.61827446509262,
+    "daysAgo": 9,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "fc4688a8-72cc-57c1-b8bf-e9cc4986a753",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 3,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 2.549946978914711,
+      "articulation": 3.3009022581525036,
+      "pause": 1.110763240372286
+    },
+    "daysAgo": 8,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "58488517-acc6-5228-9739-36237b3f3ea4",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 8.906270309871728,
+    "daysAgo": 8,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "a3b79f92-842b-5968-be7f-8c66cb812793",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 3,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 2.464097260423106,
+      "articulation": 3.3980848754594906,
+      "pause": 1.1391536811272847
+    },
+    "daysAgo": 7,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "91bfdb2f-7171-5cf0-9350-3b2a9696a8fa",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 8.964698677000332,
+    "daysAgo": 7,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "23d6ce01-c1f3-5f6d-a591-ffd4cc84bbb8",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 3,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 2.696738368517948,
+      "articulation": 3.443386033893058,
+      "pause": 1.065568169598337
+    },
+    "daysAgo": 6,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "d98a31d3-8e1f-5c1e-9cec-83dd05409e12",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 8.807452774642552,
+    "daysAgo": 6,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "176fc08d-932b-570c-bab3-aa0075190fcb",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 2,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 2.9938453028890493,
+      "articulation": 3.669929496523561,
+      "pause": 0.9275515908084278
+    },
+    "daysAgo": 5,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "a35a95c6-b226-5aa0-84ab-bfad1841b420",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 9.729748339977705,
+    "daysAgo": 5,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "0a58b30f-010e-512c-8eee-9b270ce607e3",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 2,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.2152411865743242,
+      "articulation": 4.076247084334289,
+      "pause": 0.7801653537758715
+    },
+    "daysAgo": 4,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "136c4500-55fe-5d04-9dce-c490d91cb2e6",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 11.274084915308226,
+    "daysAgo": 4,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "a3193850-f0fa-51e6-8079-66f74b9a94ac",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.785972403397164,
+      "articulation": 4.55302220720055,
+      "pause": 0.5038017135556199
+    },
+    "daysAgo": 3,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "c20105b4-d1a5-5ec2-aae4-fdeee09f99a2",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.267290289038211,
+    "daysAgo": 3,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "7225569b-def5-5b30-b766-00e1f9fd7475",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.827100559055663,
+      "articulation": 4.458825787937189,
+      "pause": 0.4579454225729262
+    },
+    "daysAgo": 2,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "8fde741b-24ec-5925-8d64-4e78481ee40a",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.914492992109638,
+    "daysAgo": 2,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "e73b44b2-af88-57c0-a05d-318eb509badc",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.672111088604321,
+      "articulation": 4.506226587778103,
+      "pause": 0.4841851522202064
+    },
+    "daysAgo": 1,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "ab30615b-1465-5856-891e-959ecafaac58",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 12.897228789273795,
+    "daysAgo": 1,
+    "minuteOfDay": 541
+  },
+  {
+    "id": "e6ebb4d5-1697-54d7-bce2-2977febf97f5",
+    "source": "READING",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 26
+    },
+    "speech": {
+      "syllables": 72,
+      "pace": 3.7498985967271663,
+      "articulation": 4.451347934491826,
+      "pause": 0.5272544260900932
+    },
+    "daysAgo": 0,
+    "minuteOfDay": 540
+  },
+  {
+    "id": "56c909f1-74a2-5268-b43d-5e1ffde2c450",
+    "source": "VOWEL",
+    "input": "Демо-микрофон",
+    "cough": {
+      "episodeCount": 0,
+      "analyzedDuration": 5
+    },
+    "cpps": 13.254483738483426,
+    "daysAgo": 0,
+    "minuteOfDay": 541
+  }
+]

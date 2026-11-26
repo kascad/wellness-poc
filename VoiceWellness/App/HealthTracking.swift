@@ -1,4 +1,5 @@
 import Observation
+import OSLog
 import SwiftUI
 import UserNotifications
 
@@ -6,6 +7,9 @@ import UserNotifications
 final class HealthTracking {
     static let shared = HealthTracking()
     static let category = "health-recommendation"
+    private static let demoInterval: TimeInterval = 120
+    private static let demoStartedKey = "notificationDemoStarted"
+    private static let logger = Logger(subsystem: "com.mts.prototype.voicewellness", category: "notification-demo")
 
     enum Action: String {
         case consulted, later, skip
@@ -54,6 +58,26 @@ final class HealthTracking {
         if paused { cancelReminder() }
     }
 
+    func startDemoAutomatically() async {
+        #if targetEnvironment(simulator)
+        guard !defaults.bool(forKey: Self.demoStartedKey) else { return }
+        await startDemo()
+        #endif
+    }
+
+    func startDemo() async {
+        guard !paused, !scheduling, active?.reminderID == nil, active?.demo != false else { return }
+        if active == nil {
+            recordRecommendation("Если осиплость сохраняется, можно обсудить её с ЛОР-врачом.", demo: true)
+        }
+        guard let active else { return }
+        let trigger = UNTimeIntervalNotificationTrigger(timeInterval: Self.demoInterval, repeats: true)
+        if await schedule(active, trigger: trigger, date: trigger.nextTriggerDate()) {
+            defaults.set(true, forKey: Self.demoStartedKey)
+            Self.logger.info("System demo notification scheduled with a 120-second repeating trigger")
+        }
+    }
+
     func respond(_ action: Action, recommendationID: UUID) async {
         guard let recommendation = active, recommendation.id == recommendationID else { return }
         cancelReminder()
@@ -65,10 +89,21 @@ final class HealthTracking {
         }
         guard !paused else { return }
 
+        let calendar = Calendar.current
+        let date = calendar.date(byAdding: .day, value: 1, to: .now) ?? Date.now.addingTimeInterval(86_400)
+        let trigger = UNCalendarNotificationTrigger(
+            dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date),
+            repeats: false
+        )
+        _ = await schedule(recommendation, trigger: trigger, date: date)
+    }
+
+    private func schedule(_ recommendation: Recommendation, trigger: UNNotificationTrigger, date: Date?) async -> Bool {
         let intent = UUID()
         let requestID = "health-reminder-\(intent.uuidString)"
         scheduleIntent = intent
         scheduling = true
+        reminderError = nil
         defer {
             if scheduleIntent == intent {
                 scheduleIntent = nil
@@ -83,33 +118,31 @@ final class HealthTracking {
             case .notDetermined: allowed = try await notifications.requestAuthorization(options: [.alert, .sound])
             default: allowed = false
             }
-            guard scheduleIntent == intent else { return }
+            guard scheduleIntent == intent else { return false }
             guard allowed else {
-                reminderError = "Уведомления выключены в настройках iOS. Рекомендация доступна в разделе «Сигнал»."
-                return
+                reminderError = "Разрешите уведомления для «Голоса» в настройках iOS."
+                return false
             }
-            let calendar = Calendar.current
-            let date = calendar.date(byAdding: .day, value: 1, to: .now) ?? Date.now.addingTimeInterval(86_400)
             let content = UNMutableNotificationContent()
             content.title = recommendation.demo ? "Голос · демо" : "Напоминание от «Голоса»"
             content.body = recommendation.text
+            content.sound = .default
             content.categoryIdentifier = Self.category
-            content.userInfo = ["recommendationID": recommendationID.uuidString]
-            let trigger = UNCalendarNotificationTrigger(
-                dateMatching: calendar.dateComponents([.year, .month, .day, .hour, .minute], from: date),
-                repeats: false
-            )
+            content.userInfo = ["recommendationID": recommendation.id.uuidString]
             active?.reminderID = requestID
             active?.reminderDate = date
             persist()
             try await notifications.add(UNNotificationRequest(identifier: requestID, content: content, trigger: trigger))
-            if scheduleIntent != intent {
+            guard scheduleIntent == intent else {
                 notifications.removePendingNotificationRequests(withIdentifiers: [requestID])
+                return false
             }
+            return true
         } catch {
-            guard scheduleIntent == intent else { return }
+            guard scheduleIntent == intent else { return false }
             cancelReminder()
             reminderError = "Не удалось запланировать напоминание. Попробуйте ещё раз."
+            return false
         }
     }
 
@@ -163,7 +196,7 @@ final class HealthNotificationDelegate: NSObject, UIApplicationDelegate, UNUserN
         let id = notification.request.content.userInfo["recommendationID"] as? String
         return await MainActor.run {
             let tracking = HealthTracking.shared
-            return !tracking.paused && tracking.active?.id.uuidString == id ? [.banner, .list] : []
+            return !tracking.paused && tracking.active?.id.uuidString == id ? [.banner, .list, .sound] : []
         }
     }
 }

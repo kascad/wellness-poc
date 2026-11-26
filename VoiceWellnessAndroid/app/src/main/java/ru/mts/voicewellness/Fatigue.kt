@@ -5,14 +5,20 @@ import java.time.LocalDate
 import java.time.ZoneId
 import kotlin.math.roundToInt
 
-internal data class FatigueDay(val date: LocalDate, val score: Int)
+internal data class FatigueDay(val date: LocalDate, val score: Int, val preliminary: Boolean) {
+    val guidance: String
+        get() = when (score) {
+            in 0..33 -> "Голосовая усталость низкая. Продолжайте в привычном режиме."
+            in 34..66 -> "Голосовая усталость умеренная. Сделайте короткую паузу в разговорах."
+            else -> "Голосовая усталость высокая. По возможности сократите разговоры и дайте голосу отдохнуть."
+        }
+}
 
 internal object Fatigue {
-    const val DEFAULT_SCORE = 66
-    const val EMPTY = "Баллы появятся после замеров за три предыдущих дня и нового замера."
+    const val EMPTY = "Сделайте замер голоса, чтобы получить оценку."
 
-    private enum class Metric(val weight: Double) {
-        PACE(25.0), ARTICULATION(20.0), PAUSE(20.0), CPPS(25.0), COUGH(10.0);
+    private enum class Metric(val weight: Double, val initialReference: Double) {
+        PACE(25.0, 2.7), ARTICULATION(20.0, 3.35), PAUSE(20.0, .55), CPPS(25.0, 14.0), COUGH(10.0, 0.0);
 
         fun severity(value: Double, baseline: Double): Double = when (this) {
             PACE, ARTICULATION -> (baseline - value) / maxOf(.3 * baseline, .3)
@@ -48,6 +54,12 @@ internal object Fatigue {
         }
     }
 
+    private fun score(deviation: Double): Int {
+        val baseline = 12.0
+        val span = if (deviation < 0) baseline else 100 - baseline
+        return (baseline + span * deviation).roundToInt()
+    }
+
     fun days(history: List<Measurement>, zone: ZoneId = ZoneId.systemDefault()): List<FatigueDay> {
         val grouped = history.filter { it.source != Source.TELEPHONY_DEMO }.groupBy {
             Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate()
@@ -59,21 +71,23 @@ internal object Fatigue {
             var weighted = 0.0
             var total = 0.0
             var voiceWeight = 0.0
+            var preliminary = false
             for (metric in Metric.entries) {
                 val scores = today.mapNotNull(metric::profile).distinct().mapNotNull { key ->
                     val value = metric.dailyValue(today, key) ?: return@mapNotNull null
                     val reference = earlier.asSequence().mapNotNull {
                         metric.dailyValue(grouped.getValue(it), key)
                     }.take(7).toList()
-                    val baseline = if (reference.size >= 3) median(reference) else null
-                    baseline?.let { metric.severity(value, it).coerceIn(0.0, 1.0) }
+                    val personal = if (reference.size >= 3) median(reference) else null
+                    if (personal == null) preliminary = true
+                    metric.severity(value, personal ?: metric.initialReference).coerceIn(-1.0, 1.0)
                 }
                 val score = median(scores) ?: continue
                 weighted += metric.weight * score
                 total += metric.weight
                 if (metric != Metric.COUGH) voiceWeight += metric.weight
             }
-            if (voiceWeight > 0) FatigueDay(date, (100 * weighted / total).roundToInt()) else null
+            if (voiceWeight > 0) FatigueDay(date, score(weighted / total), preliminary) else null
         }
     }
 }

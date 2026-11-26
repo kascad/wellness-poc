@@ -14,3 +14,7 @@
 Нужны JDK 17, Android SDK Platform 35, NDK 27.0.12077973 и CMake 3.22.1. Для сборки положите каталоги `VoiceWellnessAndroid` и `VoiceWellness` рядом. Android использует детектор из `VoiceWellness/App/MobileCough`. Откройте каталог в Android Studio или выполните `./gradlew assembleDebug`. APK появится в `app/build/outputs/apk/debug/app-debug.apk`. Минимальная версия Android — 8.0 (API 26).
 
 Для запуска на подключённом устройстве или в эмуляторе выполните `adb install -r app/build/outputs/apk/debug/app-debug.apk`.
+
+## APK с тестовой историей
+
+Выполните `./gradlew assembleDemo`. APK появится в `app/build/outputs/apk/demo/app-demo.apk`. Он устанавливается отдельно от основной сборки как `ru.mts.voicewellness.demo`. При первом запуске открывается «Динамика» за 30 дней, а история из APK привязывается к дате запуска. Тестовый эпизод начинается за 10 дней до неё и длится 7 дней. Если удалить историю через настройки приложения, она не заполнится повторно.
