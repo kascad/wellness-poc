@@ -1,0 +1,10 @@
+.DS_Store
+__pycache__/
+*.pyc
+xcuserdata/
+DerivedData/
+.gradle/
+.kotlin/
+.cxx/
+build/
+local.properties

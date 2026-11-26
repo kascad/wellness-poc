@@ -1,0 +1,35 @@
+{
+  "train_meetings": [
+    "EN2001a",
+    "EN2002b",
+    "ES2004a",
+    "ES2004b",
+    "ES2013c",
+    "TS3003a"
+  ],
+  "training_windows": 814,
+  "threshold_logit": 0.40357007510470455,
+  "threshold_score": 0.5995451060113902,
+  "calibration": {
+    "meetings": [
+      "EN2002c",
+      "EN2006b",
+      "IS1009a"
+    ],
+    "positives": 13,
+    "negatives": 29,
+    "detected": 11,
+    "false_positives": 2
+  },
+  "holdout": {
+    "meetings": [
+      "EN2002a",
+      "EN2002d",
+      "ES2008b"
+    ],
+    "positives": 12,
+    "negatives": 34,
+    "detected": 11,
+    "false_positives": 1
+  }
+}

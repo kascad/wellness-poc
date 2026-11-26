@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.22.1)
+project(voice_cough C)
+set(SHARED_DSP "${CMAKE_CURRENT_SOURCE_DIR}/../../../../../VoiceWellness/App/MobileCough")
+add_library(voice_cough SHARED CoughJni.c "${SHARED_DSP}/CoughDetector.c")
+target_include_directories(voice_cough PRIVATE "${SHARED_DSP}")
+target_compile_options(voice_cough PRIVATE -O2)
+target_link_libraries(voice_cough m)

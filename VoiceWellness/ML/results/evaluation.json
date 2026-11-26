@@ -1,0 +1,42 @@
+{
+  "seed": 26,
+  "threshold": 0.2052432403919333,
+  "train": {
+    "FSD50K": 89,
+    "COUGHVID": 200
+  },
+  "calibration_FSD50K": {
+    "clips": 32,
+    "true_positive": 15,
+    "false_positive": 5,
+    "true_negative": 10,
+    "false_negative": 2,
+    "roc_auc": 0.8235294117647058,
+    "average_precision": 0.8637339252566957
+  },
+  "test_FSD50K": {
+    "clips": 29,
+    "true_positive": 13,
+    "false_positive": 8,
+    "true_negative": 6,
+    "false_negative": 2,
+    "roc_auc": 0.780952380952381,
+    "average_precision": 0.8063429163429163
+  },
+  "test_COUGHVID_positive_only": {
+    "clips": 50,
+    "true_positive": 49,
+    "false_positive": 0,
+    "true_negative": 0,
+    "false_negative": 1
+  },
+  "test_AMI_annotated_windows": {
+    "clips": 184,
+    "true_positive": 31,
+    "false_positive": 16,
+    "true_negative": 119,
+    "false_negative": 18,
+    "roc_auc": 0.8071050642479214,
+    "average_precision": 0.7074518509346702
+  }
+}
