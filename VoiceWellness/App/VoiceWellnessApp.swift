@@ -127,7 +127,8 @@ struct WellnessView: View {
     }
 
     private var today: some View {
-        ScrollView {
+        let assessment = Fatigue.days(model.history).last { Calendar.current.isDateInToday($0.date) }
+        return ScrollView {
             VStack(spacing: 19) {
                 HStack(alignment: .top) {
                     VStack(alignment: .leading, spacing: 4) {
@@ -154,8 +155,12 @@ struct WellnessView: View {
                         .accessibilityHidden(true)
                 }
                 VStack(spacing: 6) {
-                    Text("Ваш голос сегодня").font(.title2.bold())
-                    Text(tracking.paused ? "Отслеживание приостановлено" : "Короткий замер темпа и пауз").foregroundStyle(.secondary)
+                    Text(assessment?.guidance ?? "Сегодня ещё нет оценки. Сделайте голосовой замер.")
+                        .multilineTextAlignment(.center)
+                        .foregroundStyle(.secondary)
+                    if tracking.paused {
+                        Text("Отслеживание приостановлено").font(.footnote).foregroundStyle(.secondary)
+                    }
                 }
                 Button {
                     model.resetResult()
@@ -175,14 +180,6 @@ struct WellnessView: View {
                 }
                 .buttonStyle(.glass)
                 .disabled(tracking.paused)
-                let last = model.history.filter { $0.source != .telephonyDemo }.max { $0.date < $1.date }
-                let day = last.flatMap { latest in
-                    Fatigue.days(model.history).last { Calendar.current.isDate($0.date, inSameDayAs: latest.date) }
-                }
-                if let day {
-                    Text("Последний замер · Усталость \(day.score) из 100")
-                        .font(.footnote).foregroundStyle(.secondary)
-                }
                 Button {
                     model.resetResult()
                     showTelephony = true

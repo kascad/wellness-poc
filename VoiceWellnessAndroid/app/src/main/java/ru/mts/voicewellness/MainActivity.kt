@@ -348,10 +348,15 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Today(onTelephony: () -> Unit) {
+        val zone = ZoneId.systemDefault()
+        val today = LocalDate.now(zone)
+        val assessment = remember(history, zone, today) {
+            Fatigue.days(history, zone).lastOrNull { it.date == today }
+        }
         Row(Modifier.fillMaxWidth().padding(top = 13.dp), horizontalArrangement = Arrangement.SpaceBetween) {
             Column {
                 Title("Голос")
-                Text(LocalDate.now().format(DateTimeFormatter.ofPattern("d MMMM", Russian)), color = Ink.copy(alpha = .65f))
+                Text(today.format(DateTimeFormatter.ofPattern("d MMMM", Russian)), color = Ink.copy(alpha = .65f))
             }
             Image(painterResource(R.drawable.eco_logo), null, Modifier.size(32.dp))
         }
@@ -359,20 +364,13 @@ class MainActivity : ComponentActivity() {
             Modifier.fillMaxWidth().height(237.dp).clip(RoundedCornerShape(30.dp)), contentScale = ContentScale.Crop)
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.spacedBy(14.dp)) {
-            Text("Ваш голос сегодня", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(if (paused) "Отслеживание приостановлено" else "Короткий замер темпа и пауз", color = Muted)
+            Text(assessment?.guidance ?: "Сегодня ещё нет оценки. Сделайте голосовой замер.",
+                color = Muted, textAlign = TextAlign.Center)
+            if (paused) Footnote("Отслеживание приостановлено")
             Button({ open(Source.READING) }, Modifier.fillMaxWidth().heightIn(min = 54.dp), enabled = !paused) {
                 Text("Начать замер", fontWeight = FontWeight.Bold)
             }
             GlassButton("Скажите «А-а-а»", Icons.Default.Mic, !paused) { open(Source.VOWEL) }
-            val zone = ZoneId.systemDefault()
-            val days = remember(history, zone) { Fatigue.days(history, zone) }
-            val day = latestManualMeasurement()?.let { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }
-            val score = days.lastOrNull { it.date == day }?.score
-            if (score != null) {
-                Text("Последний замер · Усталость $score из 100",
-                    style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
             GlassButton("Телефония · демо", Icons.Default.Phone, !paused, onClick = onTelephony)
         }
     }
@@ -456,19 +454,34 @@ class MainActivity : ComponentActivity() {
 
     @Composable
     private fun Signal() {
+        var showCoughAlert by remember { mutableStateOf(false) }
         var showMedsi by remember { mutableStateOf(false) }
         Row(Modifier.fillMaxWidth().padding(top = 13.dp), verticalAlignment = Alignment.CenterVertically,
             horizontalArrangement = Arrangement.SpaceBetween) {
             Title("Сигнал")
             Box(Modifier.sizeIn(minWidth = 48.dp, minHeight = 48.dp)
                 .semantics { contentDescription = "Max, тестовый сценарий кашля" }
-                .clickable(role = Role.Button) { showMedsi = true },
+                .clickable(role = Role.Button) { showCoughAlert = true },
                 contentAlignment = Alignment.Center) {
                 Text("Max", Modifier.background(Color(0xFFB81F2E), Pill).padding(horizontal = 14.dp, vertical = 7.dp),
                     color = Color.White, fontWeight = FontWeight.Bold)
             }
         }
         FatigueReadout(latestManualMeasurement()?.date)
+        if (showCoughAlert) {
+            AlertDialog(
+                onDismissRequest = { showCoughAlert = false },
+                title = { Text("Отмечен повторяющийся кашель") },
+                text = { Text("Тестовый сигнал. Если кашель долго не проходит, обсудите его с врачом.") },
+                confirmButton = {
+                    TextButton({
+                        showCoughAlert = false
+                        showMedsi = true
+                    }) { Text("Записаться к врачу") }
+                },
+                dismissButton = { TextButton({ showCoughAlert = false }) { Text("Закрыть") } },
+            )
+        }
         if (showMedsi) MedsiFlow { showMedsi = false }
     }
 

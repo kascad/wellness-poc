@@ -2,6 +2,7 @@ import SwiftUI
 
 struct SignalView: View {
     let history: [Measurement]
+    @State private var showCoughAlert = false
     @State private var showMedsi = false
 
     var body: some View {
@@ -11,7 +12,7 @@ struct SignalView: View {
                 HStack {
                     Text("Сигнал").font(.largeTitle.bold())
                     Spacer()
-                    Button { showMedsi = true } label: {
+                    Button { showCoughAlert = true } label: {
                         Text("Max").font(.subheadline.weight(.bold))
                             .foregroundStyle(.white)
                             .padding(.horizontal, 14)
@@ -29,6 +30,12 @@ struct SignalView: View {
             .padding(24)
         }
         .background(pearl.ignoresSafeArea())
+        .alert("Отмечен повторяющийся кашель", isPresented: $showCoughAlert) {
+            Button("Записаться к врачу") { showMedsi = true }
+            Button("Закрыть", role: .cancel) {}
+        } message: {
+            Text("Тестовый сигнал. Если кашель долго не проходит, обсудите его с врачом.")
+        }
         .fullScreenCover(isPresented: $showMedsi) { MedsiFlow() }
     }
 }
