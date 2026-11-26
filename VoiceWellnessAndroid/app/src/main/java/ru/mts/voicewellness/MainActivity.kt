@@ -4,7 +4,6 @@ import android.Manifest
 import android.content.ActivityNotFoundException
 import android.content.Intent
 import android.content.SharedPreferences
-import android.os.Build
 import android.content.pm.PackageManager
 import android.net.Uri
 import android.widget.Toast
@@ -34,11 +33,14 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.res.painterResource
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,31 +78,14 @@ private enum class Tab(val label: String, val icon: ImageVector) {
     SETTINGS("Настройки", Icons.Default.Settings),
 }
 
-private enum class Metric(val title: String, val unit: String) {
-    PAUSE("Паузы", "с"), PACE("Темп речи", "слога/с"), CPPS("CPPS", "дБ");
-    fun value(entry: Measurement): Double? = when (this) {
-        PAUSE -> entry.speech?.pause
-        PACE -> entry.speech?.pace
-        CPPS -> entry.cpps
-    }
-}
-
 class MainActivity : ComponentActivity() {
+    private var demoHistory = false
     private lateinit var store: MeasurementStore
     private lateinit var recommendations: Recommendations
     private lateinit var recommendationPreferences: SharedPreferences
     private var recommendation by mutableStateOf<Recommendation?>(null)
-    private var reminderError by mutableStateOf<String?>(null)
-    private var requestedReminder: String? = null
     private val recommendationListener = SharedPreferences.OnSharedPreferenceChangeListener { _, _ ->
         recommendation = recommendations.current()
-    }
-    private val notificationPermission = registerForActivityResult(ActivityResultContracts.RequestPermission()) { granted ->
-        requestedReminder?.let { id ->
-            if (granted) postpone(id)
-            else reminderError = "Уведомления выключены в настройках Android."
-        }
-        requestedReminder = null
     }
     private var history by mutableStateOf(listOf<Measurement>())
     private var paused by mutableStateOf(false)
@@ -127,7 +112,9 @@ class MainActivity : ComponentActivity() {
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
-        store = MeasurementStore(this)
+        demoHistory = (applicationInfo.flags and android.content.pm.ApplicationInfo.FLAG_DEBUGGABLE) != 0 &&
+            intent.getBooleanExtra("demo_history", false)
+        store = MeasurementStore(this, demoHistory)
         recommendations = Recommendations(this)
         recommendationPreferences = getSharedPreferences("recommendation", MODE_PRIVATE)
         recommendationPreferences.registerOnSharedPreferenceChangeListener(recommendationListener)
@@ -152,10 +139,6 @@ class MainActivity : ComponentActivity() {
     override fun onDestroy() {
         recommendationPreferences.unregisterOnSharedPreferenceChangeListener(recommendationListener)
         super.onDestroy()
-    }
-
-    private fun postpone(id: String) {
-        reminderError = if (recommendations.postpone(id)) null else "Не удалось запланировать напоминание. Проверьте настройки уведомлений."
     }
 
     override fun onStop() {
@@ -263,7 +246,7 @@ class MainActivity : ComponentActivity() {
     @OptIn(ExperimentalMaterial3Api::class)
     @Composable
     private fun App() {
-        var tab by remember { mutableStateOf(Tab.TODAY) }
+        var tab by remember { mutableStateOf(if (demoHistory) Tab.HISTORY else Tab.TODAY) }
         var showTelephony by remember { mutableStateOf(false) }
         val recordingSource = source
         BackHandler(enabled = recordingSource != null) { close() }
@@ -380,9 +363,12 @@ class MainActivity : ComponentActivity() {
                 Text("Начать замер", fontWeight = FontWeight.Bold)
             }
             GlassButton("Скажите «А-а-а»", Icons.Default.Mic, !paused) { open(Source.VOWEL) }
-            history.lastOrNull { it.source == Source.READING }?.let {
-                Text("Последний замер · ${date(it.date)}", style = MaterialTheme.typography.bodySmall, color = Muted)
-            }
+            val zone = ZoneId.systemDefault()
+            val days = remember(history, zone) { Fatigue.days(history, zone) }
+            val day = latestManualMeasurement()?.let { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }
+            val score = days.lastOrNull { it.date == day }?.score
+            Text("Последний замер · Усталость ${score ?: Fatigue.DEFAULT_SCORE} из 100",
+                style = MaterialTheme.typography.bodySmall, color = Muted)
             GlassButton("Телефония · демо", Icons.Default.Phone, !paused, onClick = onTelephony)
         }
     }
@@ -456,187 +442,160 @@ class MainActivity : ComponentActivity() {
         }
     }
 
+    private fun latestManualMeasurement() = history.filter { it.source != Source.TELEPHONY_DEMO }.maxByOrNull { it.date }
+
     @Composable
     private fun Signal() {
         Box(Modifier.padding(top = 13.dp)) { Title("Сигнал") }
-        if (paused) Text("Отслеживание приостановлено", color = Muted)
-        recommendation?.let { RecommendationCard(it) }
-        val reading = history.filter { it.source == Source.READING && it.speech != null }
-        val vowels = history.filter { it.source == Source.VOWEL }
-        reading.lastOrNull()?.let { latest ->
-            Text("Последний замер", style = MaterialTheme.typography.headlineSmall, fontWeight = FontWeight.Bold)
-            Text(date(latest.date), color = Muted)
-            Details(latest)
-            Text("Сравнение с предыдущими", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            val base = reading.dropLast(1).takeLast(7)
-            if (base.size < 3) {
-                Text("База сравнения: ${base.size} из 3")
-                Text("Сделайте ещё несколько замеров в похожих условиях. Сравнение появится после трёх предыдущих записей.", color = Muted)
-            } else {
-                listOf(Metric.PACE to "Темп речи", Metric.PAUSE to "Медианная пауза").forEach { (metric, title) ->
-                    val values = base.mapNotNull(metric::value)
-                    val baseline = median(values)
-                    val current = metric.value(latest)
-                    CardBlock(title) {
-                        if (baseline != null && current != null && values.size >= 3) {
-                            val delta = kotlin.math.round((current / baseline - 1) * 100).toInt()
-                            Text("${number(current)} ${metric.unit} · ранее ${number(baseline)} ${metric.unit}")
-                            Text(if (delta == 0) "Разница меньше 1%" else "${if (delta > 0) "+" else "−"}${kotlin.math.abs(delta)}% к предыдущей медиане", color = Emerald)
-                        } else {
-                            Text("Недостаточно замеров с измеримыми паузами.", color = Muted)
-                        }
-                    }
+        val zone = ZoneId.systemDefault()
+        val days = remember(history, zone) { Fatigue.days(history, zone) }
+        val latest = latestManualMeasurement()
+        val lastDay = latest?.let { Instant.ofEpochMilli(it.date).atZone(zone).toLocalDate() }
+        val measuredScore = days.lastOrNull { it.date == lastDay }?.score
+        val score = measuredScore ?: Fatigue.DEFAULT_SCORE
+        Column(
+            Modifier.fillMaxWidth().padding(top = 26.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+            verticalArrangement = Arrangement.spacedBy(12.dp),
+        ) {
+            Column(
+                Modifier.fillMaxWidth().clearAndSetSemantics {
+                    contentDescription = "Усталость за день, $score из 100"
+                },
+                horizontalAlignment = Alignment.CenterHorizontally,
+                verticalArrangement = Arrangement.spacedBy(12.dp),
+            ) {
+                Text("Усталость за день", style = MaterialTheme.typography.titleMedium, fontWeight = FontWeight.SemiBold)
+                BoxWithConstraints(Modifier.fillMaxWidth().height(184.dp), contentAlignment = Alignment.Center) {
+                    val fontScale = LocalDensity.current.fontScale
+                    val size = minOf(160f, maxWidth.value / (score.toString().length * .68f * fontScale))
+                    Text(
+                        score.toString(),
+                        Modifier.graphicsLayer { scaleX = .79f; scaleY = 1.14f },
+                        fontSize = size.sp,
+                        lineHeight = size.sp,
+                        letterSpacing = 0.sp,
+                        fontWeight = FontWeight.SemiBold,
+                        color = Emerald,
+                        maxLines = 1,
+                    )
                 }
-                Footnote("Сравнение с медианой последних семи предыдущих замеров или всех доступных, если их меньше.")
+                Text("из 100", style = MaterialTheme.typography.bodyMedium, color = Muted)
             }
-            Footnote("Темп и паузы описывают изменения речи. По ним пока нельзя оценить уровень усталости.")
-        }
-        CardBlock("Кашель · 7 дней") {
-            val cutoff = LocalDate.now().minusDays(6).atStartOfDay(java.time.ZoneId.systemDefault()).toInstant().toEpochMilli()
-            val samples = history.filter { it.date >= cutoff }.mapNotNull { it.cough }
-            if (samples.isEmpty()) {
-                Text("Пока нет записей, проверенных на кашель.")
-            } else {
-                Text("Вероятных эпизодов: ${samples.sumOf { it.episodeCount }}")
-                val duration = samples.sumOf { it.analyzedDuration }
-                Footnote("Время анализа записей: ${number(duration)} с")
-                Footnote("Частота: ${number(samples.sumOf { it.episodeCount } * 60 / duration)} эпиз./мин записи")
-            }
-            Footnote("Учитываются ручные замеры. По этому показателю нельзя определить причину кашля.")
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Звучание голоса · CPPS", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            val vowel = vowels.lastOrNull()
-            val score = vowel?.cpps
-            if (vowel == null || score == null) {
-                Text("Сделайте первый замер «А-а-а» на вкладке «Сегодня».")
-            } else {
-                Text("${number(score)} дБ", style = MaterialTheme.typography.headlineSmall, color = Emerald, fontWeight = FontWeight.Bold)
-                Footnote(vowel.input.substringBefore(" · "))
-                val base = vowels.dropLast(1).filter { it.input == vowel.input }.mapNotNull { it.cpps }.takeLast(7)
-                val baseline = median(base)
-                if (baseline == null || base.size < 5) {
-                    Text("Личная база: ${base.size} из 5 предыдущих замеров на этом микрофоне.")
-                } else {
-                    val delta = score - baseline
-                    val signed = String.format(Russian, "%+.1f", delta)
-                    Text("Личная медиана: ${number(baseline)} дБ · разница $signed дБ")
-                    Footnote("Сравнение с ${base.size} предыдущими замерами на том же микрофоне.")
-                }
-            }
-            Footnote("Показатель описывает звучание голоса. Причину изменений по нему определить нельзя.")
-        }
-        Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {
-            Text("Кашель · 7 дней", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-            Text("Анализ кашля пока недоступен на Android.")
-        }
-    }
-
-    @Composable
-    private fun RecommendationCard(entry: Recommendation) {
-        CardBlock("Рекомендация · демо") {
-            Text(DEMO_RECOMMENDATION)
-            entry.reminderAt?.let { Footnote("Напоминание: ${date(it)}") }
-            reminderError?.let { Footnote(it) }
-            RecommendationButton("Уже обратился", Color(0xFF18753D)) { recommendations.close(entry.id); reminderError = null }
-            RecommendationButton("Позже", Color(0xFFFFCC00), OnPearl, enabled = !paused) {
-                if (Build.VERSION.SDK_INT >= 33 &&
-                    checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != PackageManager.PERMISSION_GRANTED) {
-                    requestedReminder = entry.id
-                    notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                } else {
-                    postpone(entry.id)
-                }
-            }
-            RecommendationButton("Пропустить", Color(0xFFCC2929)) { recommendations.close(entry.id); reminderError = null }
+            latest?.let { Box(Modifier.padding(top = 16.dp)) { Footnote(date(it.date)) } }
         }
     }
 
     @Composable
     private fun History() {
-        var period by remember { mutableIntStateOf(7) }
-        var metric by remember { mutableStateOf(Metric.PAUSE) }
+        var period by remember { mutableIntStateOf(if (demoHistory) 30 else 1) }
+        val today = LocalDate.now()
+        val days = remember(history, today) { Fatigue.days(history) }
+        val start = today.minusDays(period.toLong() - 1)
+        val points = days.filter { it.date >= start && it.date <= today }
         Box(Modifier.padding(top = 13.dp)) { Title("Динамика") }
-        Chips(listOf(7, 30), period, { "$it дней" }) { period = it }
-        Chips(Metric.entries, metric, { it.title }) { metric = it }
-        val start = LocalDate.now().minusDays(period.toLong() - 1).atStartOfDay(ZoneId.systemDefault()).toInstant().toEpochMilli()
-        val speech = history.filter { it.date >= start && it.source == Source.READING && it.speech != null }
-        val candidates = if (metric == Metric.CPPS) history.filter { it.date >= start && it.cpps != null } else speech
-        val comparable = if (metric == Metric.CPPS) candidates.lastOrNull()?.let { last -> candidates.filter { it.input == last.input } }.orEmpty()
-            else candidates
-        if (metric != Metric.CPPS && speech.isNotEmpty()) {
-            CardBlock("Что изменилось") {
-                Footnote("Замеров за период: ${speech.size}")
-                if (speech.size == 1) Text("Для сравнения нужен ещё один замер.")
-                else {
-                    for ((indicator, title) in listOf(Metric.PACE to "Темп речи", Metric.PAUSE to "Медианная пауза")) {
-                        val values = speech.mapNotNull(indicator::value)
-                        if (values.size > 1) Text("$title: ${number(values.first())} ${indicator.unit} → ${number(values.last())} ${indicator.unit}")
-                        else Text("Для сравнения пауз нужны два замера с паузами от 0,25 с.")
+        Chips(listOf(1, 7, 30), period, { if (it == 1) "1 день" else "$it дней" }) { period = it }
+        CardBlock("Усталость") {
+            if (period == 1) {
+                FatigueGauge(points.lastOrNull()?.score ?: Fatigue.DEFAULT_SCORE)
+            } else if (points.isNotEmpty()) {
+                FatigueChart(points, start, today)
+                Footnote("Дней с оценкой: ${points.size} из $period")
+            }
+            if (points.isEmpty() && period != 1) {
+                Text("За этот период нет оценок")
+                Footnote(Fatigue.EMPTY)
+            }
+        }
+        if (demoHistory && period == 30) {
+            val zone = ZoneId.systemDefault()
+            val episode = history.filter { (it.cough?.episodeCount ?: 0) > 0 }.sortedBy { it.date }
+            if (episode.isNotEmpty()) {
+                val format = DateTimeFormatter.ofPattern("d MMMM", Russian)
+                val first = Instant.ofEpochMilli(episode.first().date).atZone(zone).format(format)
+                val last = Instant.ofEpochMilli(episode.last().date).atZone(zone).format(format)
+                CardBlock("Кашель и охриплость") {
+                    Text("$first — $last")
+                    Footnote("В этот период выросла частота кашля и снизился CPPS. Затем показатели восстановились.")
+                }
+            }
+        }
+    }
+
+    @Composable
+    private fun FatigueGauge(score: Int?) {
+        Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            Column(Modifier.widthIn(max = 264.dp).fillMaxWidth().semantics(mergeDescendants = true) {}) {
+                Box(Modifier.fillMaxWidth().height(132.dp), contentAlignment = Alignment.BottomCenter) {
+                    Canvas(Modifier.fillMaxSize()) {
+                        val inset = 12.dp.toPx()
+                        val radius = minOf(center.x - inset, size.height - inset * 2)
+                        if (radius <= 0) return@Canvas
+                        val origin = Offset(center.x - radius, size.height - inset - radius)
+                        val bounds = androidx.compose.ui.geometry.Size(radius * 2, radius * 2)
+                        val stroke = androidx.compose.ui.graphics.drawscope.Stroke(
+                            width = 14.dp.toPx(), cap = androidx.compose.ui.graphics.StrokeCap.Round,
+                        )
+                        drawArc(Emerald.copy(alpha = .13f), 180f, 180f, false, origin, bounds, style = stroke)
+                        if (score != null) {
+                            if (score > 0) drawArc(Emerald, 180f, score * 1.8f, false, origin, bounds, style = stroke)
+                            val angle = Math.PI * (1 + score / 100.0)
+                            drawCircle(Color.White, 4.dp.toPx(), Offset(
+                                center.x + radius * kotlin.math.cos(angle).toFloat(),
+                                size.height - inset + radius * kotlin.math.sin(angle).toFloat(),
+                            ))
+                        }
                     }
-                    Footnote("Первое и последнее доступные значения за период. Разница между ними сама по себе не показывает устойчивый тренд.")
+                    Column(Modifier.padding(bottom = 12.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        Text(score?.toString() ?: "—", fontSize = 56.sp, lineHeight = 60.sp,
+                            fontWeight = FontWeight.SemiBold, color = Emerald)
+                        Footnote("из 100")
+                    }
+                }
+                Row(Modifier.fillMaxWidth().padding(horizontal = 10.dp), horizontalArrangement = Arrangement.SpaceBetween) {
+                    Footnote("0")
+                    Footnote("100")
                 }
             }
         }
-        val points = comparable.mapNotNull { entry -> metric.value(entry)?.let { entry.date to it } }
-        if (points.isEmpty()) {
-            Column(Modifier.fillMaxWidth().padding(vertical = 28.dp), horizontalAlignment = Alignment.CenterHorizontally,
-                verticalArrangement = Arrangement.spacedBy(10.dp)) {
-                Icon(Icons.AutoMirrored.Filled.ShowChart, null, Modifier.size(42.dp), tint = Muted)
-                Text("Пока нет данных", style = MaterialTheme.typography.titleLarge, fontWeight = FontWeight.Bold)
-                Text(when {
-                    metric == Metric.CPPS -> "Сделайте замер «А-а-а» на вкладке «Сегодня»."
-                    speech.isEmpty() -> "Начните голосовой замер на вкладке «Сегодня»."
-                    else -> "В выбранных записях нет пауз от 0,25 с."
-                }, textAlign = TextAlign.Center, color = Muted)
-            }
-            return
-        }
-        val minimum = points.minOf { it.second }
-        val maximum = points.maxOf { it.second }
-        val top = if (metric == Metric.CPPS) maximum + 1.0 else (maximum * 1.2).coerceAtLeast(.1)
-        val bottom = if (metric == Metric.CPPS) minimum - 1.0 else 0.0
-        Text("${number(points.last().second)} ${metric.unit}", style = MaterialTheme.typography.headlineLarge,
-            fontWeight = FontWeight.Bold, color = Emerald)
-        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(5.dp)) {
+    }
+
+    @Composable
+    private fun FatigueChart(points: List<FatigueDay>, start: LocalDate, end: LocalDate) {
+        val span = end.toEpochDay() - start.toEpochDay()
+        val dateFormat = DateTimeFormatter.ofPattern("dd.MM", Russian)
+        Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             Canvas(Modifier.weight(1f).height(190.dp).semantics {
-                contentDescription = "График: ${metric.title}. Точек: ${points.size}."
+                contentDescription = points.joinToString(prefix = "Усталость. ") {
+                    "${it.date.format(dateFormat)}: ${it.score} из 100"
+                }
             }) {
-                val margin = 6.dp.toPx()
-                val span = (points.last().first - points.first().first).coerceAtLeast(1)
-                val height = size.height - margin * 2
-                val width = size.width - margin * 2
-                for (line in 0..4) {
-                    val y = margin + height * line / 4f
-                    drawLine(Soft, Offset(0f, y), Offset(size.width, y))
-                    val x = margin + width * line / 4f
-                    drawLine(Soft, Offset(x, margin), Offset(x, size.height - margin))
+                val margin = 5.dp.toPx()
+                val width = size.width - 2 * margin
+                val height = size.height - 2 * margin
+                for (i in 0..4) {
+                    val y = margin + height * i / 4
+                    drawLine(Soft, Offset(margin, y), Offset(size.width - margin, y))
                 }
-                val coordinates = points.map { (time, value) ->
-                    val x = if (points.size == 1) center.x else margin + width *
-                        ((time - points.first().first).toFloat() / span.toFloat())
-                    val y = size.height - margin - height * ((value - bottom) / (top - bottom)).toFloat()
-                    Offset(x, y)
+                fun position(day: FatigueDay) = Offset(
+                    margin + width * (day.date.toEpochDay() - start.toEpochDay()) / span,
+                    margin + height * (1 - day.score / 100f),
+                )
+                points.zipWithNext().forEach { (a, b) ->
+                    if (a.date.plusDays(1) == b.date) drawLine(Emerald, position(a), position(b), 2.dp.toPx())
                 }
-                coordinates.zipWithNext().forEach { (a, b) -> drawLine(Emerald, a, b, 2.dp.toPx()) }
-                coordinates.forEach { drawCircle(Emerald, 3.dp.toPx(), it) }
+                points.forEach { drawCircle(Emerald, 3.dp.toPx(), position(it)) }
             }
             Column(Modifier.height(190.dp), verticalArrangement = Arrangement.SpaceBetween,
                 horizontalAlignment = Alignment.End) {
-                (0..4).forEach { line ->
-                    Text(number(top - (top - bottom) * line / 4), style = MaterialTheme.typography.labelSmall, color = Muted)
-                }
+                listOf(100, 75, 50, 25, 0).forEach { Footnote(it.toString()) }
             }
         }
         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.SpaceBetween) {
-            Text(date(points.first().first), style = MaterialTheme.typography.labelSmall, color = Muted)
-            if (points.size > 1) Text(date(points.last().first), style = MaterialTheme.typography.labelSmall, color = Muted)
-        }
-        if (metric == Metric.CPPS) {
-            Footnote("Сопоставимых замеров: ${points.size} · ${comparable.last().input.substringBefore(" · ")}")
-            if (points.size > 1) Text("Первый и последний CPPS: ${number(points.first().second)} → ${number(points.last().second)} дБ")
-        } else {
-            Footnote("Только замеры с микрофона")
+            val step = if (span == 6L) 2L else 7L
+            ((0L until span step step).toList() + span).forEach {
+                Text(start.plusDays(it).format(dateFormat), style = MaterialTheme.typography.labelSmall, color = Muted)
+            }
         }
     }
 
@@ -662,7 +621,6 @@ class MainActivity : ComponentActivity() {
                     store.paused = it
                     if (it) {
                         recommendations.cancelReminder()
-                        reminderError = null
                         close()
                     }
                 }, modifier = Modifier.semantics { contentDescription = "Приостановить отслеживание" })
@@ -769,15 +727,6 @@ private fun SettingsSection(title: String, content: @Composable ColumnScope.() -
         Surface(Modifier.fillMaxWidth(), color = Glass, shape = RoundedCornerShape(20.dp)) {
             Column(Modifier.padding(15.dp), verticalArrangement = Arrangement.spacedBy(9.dp), content = content)
         }
-    }
-}
-
-@Composable
-private fun RecommendationButton(label: String, background: Color, foreground: Color = Color.White,
-                                 enabled: Boolean = true, action: () -> Unit) {
-    Button(action, Modifier.fillMaxWidth().heightIn(min = 44.dp), enabled = enabled,
-        colors = ButtonDefaults.buttonColors(containerColor = background, contentColor = foreground)) {
-        Text(label, fontWeight = FontWeight.SemiBold)
     }
 }
 

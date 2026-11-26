@@ -67,6 +67,14 @@ final class MeasurementModel {
     var elapsed = 0
     var levels = Array(repeating: 0.06, count: 28)
     private let telephony: any TelephonyAudioSource
+    static var demoHistory: Bool {
+        #if targetEnvironment(simulator)
+        ProcessInfo.processInfo.arguments.contains("--demo-history")
+        #else
+        false
+        #endif
+    }
+
     private let storageURL: URL
     private var recorder: AVAudioRecorder?
     private var audioURL: URL?
@@ -77,7 +85,7 @@ final class MeasurementModel {
 
     init(telephony: any TelephonyAudioSource = DemoTelephonyAudioSource()) {
         self.telephony = telephony
-        storageURL = URL.applicationSupportDirectory.appending(path: "voice-measurements.json")
+        storageURL = URL.applicationSupportDirectory.appending(path: Self.demoHistory ? "voice-measurements-demo.json" : "voice-measurements.json")
         if let data = try? Data(contentsOf: storageURL) {
             do { history = try JSONDecoder().decode([Measurement].self, from: data) }
             catch { self.error = "Не удалось открыть историю замеров." }

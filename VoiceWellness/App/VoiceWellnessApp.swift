@@ -50,21 +50,22 @@ struct WellnessView: View {
     @State private var tracking = HealthTracking.shared
     @State private var recordingRequest: RecordingRequest?
     @State private var showTelephony = false
+    @State private var selectedTab = MeasurementModel.demoHistory ? 2 : 0
     @Environment(\.scenePhase) private var scenePhase
     @Environment(\.openURL) private var openURL
 
     var body: some View {
-        TabView {
-            Tab("Сегодня", systemImage: "waveform") {
+        TabView(selection: $selectedTab) {
+            Tab("Сегодня", systemImage: "waveform", value: 0) {
                 today
             }
-            Tab("Сигнал", systemImage: "waveform.path") {
-                SignalView(history: model.history, tracking: tracking)
+            Tab("Сигнал", systemImage: "waveform.path", value: 1) {
+                SignalView(history: model.history)
             }
-            Tab("Динамика", systemImage: "chart.xyaxis.line") {
+            Tab("Динамика", systemImage: "chart.xyaxis.line", value: 2) {
                 HistoryView(history: model.history)
             }
-            Tab("Настройки", systemImage: "gearshape") {
+            Tab("Настройки", systemImage: "gearshape", value: 3) {
                 DataSettingsView(model: model, tracking: tracking)
             }
         }
@@ -173,10 +174,12 @@ struct WellnessView: View {
                 }
                 .buttonStyle(.glass)
                 .disabled(tracking.paused)
-                if let last = model.history.last(where: { $0.source == .microphone }) {
-                    Text("Последний замер · \(last.date.formatted(.dateTime.day().month().hour().minute().locale(russian)))")
-                        .font(.footnote).foregroundStyle(.secondary)
+                let last = model.history.filter { $0.source != .telephonyDemo }.max { $0.date < $1.date }
+                let day = last.flatMap { latest in
+                    Fatigue.days(model.history).last { Calendar.current.isDate($0.date, inSameDayAs: latest.date) }
                 }
+                Text("Последний замер · Усталость \(day?.score ?? Fatigue.defaultScore) из 100")
+                    .font(.footnote).foregroundStyle(.secondary)
                 Button {
                     model.resetResult()
                     showTelephony = true
@@ -326,66 +329,73 @@ func number(_ value: Double) -> String {
 
 private struct HistoryView: View {
     let history: [Measurement]
-    @State private var days = 7
-    private enum Metric: Hashable { case pauses, pace, voice }
-    @State private var metric = Metric.pauses
-
-    private var recent: [Measurement] {
-        let start = Calendar.current.date(byAdding: .day, value: 1 - days, to: Calendar.current.startOfDay(for: .now)) ?? .distantPast
-        return history.filter { $0.date >= start }
-    }
+    @State private var days = MeasurementModel.demoHistory ? 30 : 1
 
     var body: some View {
+        let calendar = Calendar.current
+        let today = calendar.startOfDay(for: .now)
+        let start = calendar.date(byAdding: .day, value: 1 - days, to: today) ?? today
+        let points = Fatigue.days(history, calendar: calendar).filter { $0.date >= start && $0.date <= today }
         ScrollView {
             VStack(alignment: .leading, spacing: 18) {
                 Text("Динамика").font(.largeTitle.bold())
                 Picker("Период", selection: $days) {
+                    Text("1 день").tag(1)
                     Text("7 дней").tag(7)
                     Text("30 дней").tag(30)
                 }.pickerStyle(.segmented)
-                Picker("Показатель", selection: $metric) {
-                    Text("Паузы").tag(Metric.pauses)
-                    Text("Темп речи").tag(Metric.pace)
-                    Text("CPPS").tag(Metric.voice)
-                }.pickerStyle(.segmented)
-
-                let speech = recent.filter { $0.source == .microphone && $0.metrics != nil }
-                let latestVoice = recent.last { $0.voiceQuality != nil }?.voiceQuality
-                if metric != .voice { PeriodSummary(history: speech) }
-
-                let points = recent.compactMap { entry -> (Date, Double)? in
-                    if metric == .voice {
-                        guard let quality = entry.voiceQuality, quality.profile == latestVoice?.profile else { return nil }
-                        return (entry.date, quality.cpps)
-                    }
-                    guard entry.source == .microphone, let metrics = entry.metrics else { return nil }
-                    return (metric == .pauses ? metrics.medianPause : metrics.speechRate).map { (entry.date, $0) }
-                }
-                if let last = points.last {
-                    Text(number(last.1) + (metric == .voice ? " дБ" : metric == .pauses ? " с" : " слога/с"))
-                        .font(.largeTitle.bold()).foregroundStyle(emerald)
-                    Chart(points, id: \.0) { point in
-                        LineMark(x: .value("Дата", point.0), y: .value("Показатель", point.1))
-                            .foregroundStyle(emerald)
-                        PointMark(x: .value("Дата", point.0), y: .value("Показатель", point.1))
-                            .foregroundStyle(emerald)
-                    }
-                    .frame(height: 210)
-                    if metric == .voice, let latestVoice {
-                        Text("Сопоставимых замеров: \(points.count) · \(latestVoice.inputName)")
-                            .font(.footnote).foregroundStyle(.secondary)
-                        if points.count >= 2, let first = points.first {
-                            Text("Первый и последний CPPS: \(number(first.1)) → \(number(last.1)) дБ")
+                VStack(alignment: .leading, spacing: 16) {
+                    Text("Усталость").font(.title2.bold())
+                    if days == 1 {
+                        FatigueGauge(score: points.last?.score ?? Fatigue.defaultScore)
+                    } else if !points.isEmpty {
+                        Chart {
+                            ForEach(Array(zip(points, points.dropFirst())), id: \.0.date) { pair in
+                                if calendar.dateComponents([.day], from: pair.0.date, to: pair.1.date).day == 1 {
+                                    LineMark(x: .value("День", pair.0.date), y: .value("Балл", pair.0.score),
+                                             series: .value("Отрезок", pair.0.date))
+                                    .foregroundStyle(emerald)
+                                    LineMark(x: .value("День", pair.1.date), y: .value("Балл", pair.1.score),
+                                             series: .value("Отрезок", pair.0.date))
+                                    .foregroundStyle(emerald)
+                                }
+                            }
+                            ForEach(points) { day in
+                                PointMark(x: .value("День", day.date), y: .value("Балл", day.score))
+                                    .foregroundStyle(emerald)
+                            }
                         }
-                    } else {
-                        Text("Только замеры с микрофона").font(.footnote).foregroundStyle(.secondary)
+                        .chartXScale(domain: start...today)
+                        .chartXAxis {
+                            AxisMarks(values: .automatic(desiredCount: days == 7 ? 7 : 5)) { _ in
+                                AxisGridLine()
+                                AxisValueLabel(format: .dateTime.day().month(.twoDigits))
+                            }
+                        }
+                        .chartYScale(domain: 0...100)
+                        .chartYAxis { AxisMarks(values: [0, 25, 50, 75, 100]) }
+                        .frame(height: 210)
+                        Text("Дней с оценкой: \(points.count) из \(days)").font(.footnote).foregroundStyle(.secondary)
                     }
-                } else {
-                    ContentUnavailableView(
-                        "Пока нет данных",
-                        systemImage: "chart.xyaxis.line",
-                        description: Text(metric == .voice ? "Сделайте замер «А-а-а» на вкладке «Сегодня»." : speech.isEmpty ? "Начните голосовой замер на вкладке «Сегодня»." : "В выбранных записях нет пауз от 0,25 с.")
-                    )
+                    if points.isEmpty && days != 1 {
+                        Text("За этот период нет оценок").font(.headline)
+                        Text(Fatigue.empty).foregroundStyle(.secondary)
+                    }
+                }
+                .frame(maxWidth: .infinity, alignment: .leading)
+                .padding(18)
+                .background(.white.opacity(0.65), in: .rect(cornerRadius: 24))
+                if MeasurementModel.demoHistory && days == 30 {
+                    let episode = history.filter { ($0.cough?.episodeCount ?? 0) > 0 }.sorted { $0.date < $1.date }
+                    if let first = episode.first, let last = episode.last {
+                        VStack(alignment: .leading, spacing: 8) {
+                            Text("Кашель и охриплость").font(.headline)
+                            Text(first.date.formatted(.dateTime.day().month().locale(russian)) + " — " +
+                                 last.date.formatted(.dateTime.day().month().locale(russian)))
+                            Text("В этот период выросла частота кашля и снизился CPPS. Затем показатели восстановились.")
+                                .foregroundStyle(.secondary)
+                        }
+                    }
                 }
             }
             .padding(24)
@@ -394,6 +404,48 @@ private struct HistoryView: View {
     }
 }
 
+private struct FatigueGauge: View {
+    let score: Int?
+
+    var body: some View {
+        VStack(spacing: 2) {
+            ZStack(alignment: .bottom) {
+                Canvas { context, size in
+                    let center = CGPoint(x: size.width / 2, y: size.height - 12)
+                    let radius = min(center.x - 12, center.y - 12)
+                    guard radius > 0 else { return }
+                    func arc(_ fraction: Double) -> Path {
+                        var path = Path()
+                        path.addArc(center: center, radius: radius, startAngle: .degrees(180),
+                                    endAngle: .degrees(180 + 180 * fraction), clockwise: false)
+                        return path
+                    }
+                    let stroke = StrokeStyle(lineWidth: 14, lineCap: .round)
+                    context.stroke(arc(1), with: .color(emerald.opacity(0.13)), style: stroke)
+                    if let score {
+                        let fraction = Double(score) / 100
+                        if score > 0 { context.stroke(arc(fraction), with: .color(emerald), style: stroke) }
+                        let angle = Double.pi * (1 + fraction)
+                        let marker = CGPoint(x: center.x + radius * cos(angle), y: center.y + radius * sin(angle))
+                        context.fill(Path(ellipseIn: CGRect(x: marker.x - 4, y: marker.y - 4, width: 8, height: 8)),
+                                     with: .color(.white))
+                    }
+                }
+                VStack(spacing: 0) {
+                    Text(score.map { String($0) } ?? "—").font(.system(size: 56, weight: .semibold, design: .rounded))
+                        .monospacedDigit().foregroundStyle(emerald)
+                    Text("из 100").font(.footnote).foregroundStyle(.secondary)
+                }.padding(.bottom, 12)
+            }.frame(height: 132)
+            HStack { Text("0"); Spacer(); Text("100") }
+                .font(.footnote).foregroundStyle(.secondary).padding(.horizontal, 10)
+        }
+        .frame(maxWidth: 264)
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(score.map { "Усталость: \($0) из 100" } ?? "Сегодня нет оценки")
+    }
+}
 
 struct MeasurementDetails: View {
     let entry: Measurement

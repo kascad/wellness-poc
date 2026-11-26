@@ -17,8 +17,8 @@ internal data class Measurement(
     val cough: CoughSummary? = null,
 )
 
-internal class MeasurementStore(context: Context) {
-    private val preferences = context.getSharedPreferences("voice_wellness", Context.MODE_PRIVATE)
+internal class MeasurementStore(context: Context, demo: Boolean = false) {
+    private val preferences = context.getSharedPreferences(if (demo) "voice_wellness_demo" else "voice_wellness", Context.MODE_PRIVATE)
     var paused: Boolean
         get() = preferences.getBoolean("paused", false)
         set(value) { preferences.edit().putBoolean("paused", value).apply() }
